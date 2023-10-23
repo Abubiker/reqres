@@ -2,8 +2,6 @@ package tests;
 
 import com.google.gson.Gson;
 import io.restassured.response.Response;
-import objects.reqres.NewUser;
-import objects.reqres.Resource;
 import objects.reqres.ResourceList;
 import objects.reqres.User;
 import org.testng.Assert;
@@ -11,7 +9,6 @@ import org.testng.annotations.Test;
 
 import static io.restassured.RestAssured.given;
 import static java.net.HttpURLConnection.*;
-import static org.hamcrest.Matchers.equalTo;
 
 public class ReqresTest {
 
@@ -24,11 +21,9 @@ public class ReqresTest {
 
         Response response = given()
                 .body(user)
-                .log().all()
                 .when()
                 .post("https://reqres.in/api/users")
                 .then()
-                .log().all()
                 .extract().response();
         Assert.assertEquals(response.statusCode(), HTTP_CREATED, "Error!");
     }
@@ -39,7 +34,6 @@ public class ReqresTest {
                 .when()
                 .get("https://reqres.in/api/users?page=2")
                 .then()
-                .log().all()
                 .statusCode(HTTP_OK);
     }
 
@@ -49,7 +43,6 @@ public class ReqresTest {
                 .when()
                 .get("https://reqres.in/api/users/2")
                 .then()
-                .log().all()
                 .extract().response();
         Assert.assertEquals(response.statusCode(), HTTP_OK, "Error!");
     }
@@ -60,7 +53,6 @@ public class ReqresTest {
                 .when()
                 .get("https://reqres.in/api/users/23")
                 .then()
-                .log().all()
                 .statusCode(HTTP_NOT_FOUND);
     }
 
@@ -70,7 +62,6 @@ public class ReqresTest {
                 .when()
                 .get("https://reqres.in/api/unknown")
                 .then()
-                .log().all()
                 .statusCode(HTTP_OK)
                 .extract().body().asString();
         ResourceList resourceList = new Gson().fromJson(body, ResourceList.class);
@@ -84,7 +75,6 @@ public class ReqresTest {
                 .when()
                 .get("https://reqres.in/api/unknown/2")
                 .then()
-                .log().all()
                 .extract().response();
         Assert.assertEquals(response.statusCode(), HTTP_OK, "Error!");
     }
@@ -95,7 +85,6 @@ public class ReqresTest {
                 .when()
                 .get("https://reqres.in/api/unknown/23")
                 .then()
-                .log().all()
                 .statusCode(HTTP_NOT_FOUND);
     }
 
@@ -109,7 +98,6 @@ public class ReqresTest {
                 .when()
                 .put("https://reqres.in/api/users/2")
                 .then()
-                .log().all()
                 .extract().response();
         Assert.assertEquals(response.statusCode(), HTTP_OK, "Error!");
     }
@@ -124,35 +112,82 @@ public class ReqresTest {
                 .when()
                 .patch("https://reqres.in/api/users/2")
                 .then()
-                .log().all()
                 .extract().response();
         Assert.assertEquals(response.statusCode(), HTTP_OK, "Error!");
 
     }
+
     @Test
-    public void checkDelete(){
+    public void checkDelete() {
         given()
                 .when()
                 .delete("https://reqres.in/api/users/2")
                 .then()
-                .log().all()
                 .statusCode(HTTP_NO_CONTENT);
     }
+
     @Test
-    public void checkRegisterSuccessfull(){
-        User userser = User.builder()
+    public void checkRegisterSuccessfull() {
+        User user = User.builder()
                 .email("eve.holt@reqres.in")
                 .password("pistol")
                 .build();
-         given()
+        given()
                 .when()
                 .post("https://reqres.in/api/register")
                 .then()
-                .log().all()
                 .statusCode(HTTP_UNSUPPORTED_TYPE);
 
     }
 
+    @Test
+    public void checkUnsuccessfulRegister() {
+        User user = User.builder()
+                .email("eve.holt@reqres.in")
+                .build();
+        given()
+                .body(user)
+                .when()
+                .post("https://reqres.in/api/register")
+                .then()
+                .statusCode(HTTP_BAD_REQUEST);
+    }
 
+    @Test
+    public void checkLoginSuccessful() {
+        User user = User.builder()
+                .email("eve.holt@reqres.in")
+                .password("cityslicka")
+                .build();
+        Response response = given()
+                .body(user)
+                .when()
+                .post("https://reqres.in/api/login")
+                .then()
+                .extract().response();
+        Assert.assertEquals(response.statusCode(), HTTP_BAD_REQUEST, "Error");
+    }
+
+    @Test
+    public void checkLoginUnsuccessful() {
+        User user = User.builder()
+                .email("peter@klaven")
+                .build();
+        Response response = given()
+                .body(user)
+                .when()
+                .post("https://reqres.in/api/login")
+                .then()
+                .extract().response();
+        Assert.assertEquals(response.statusCode(), HTTP_BAD_REQUEST, "Error");
+    }
+    @Test
+    public void checkDelayedResponse(){
+        given()
+                .when()
+                .get("https://reqres.in/api/users?delay=3")
+                .then()
+                .statusCode(HTTP_OK);
+    }
 
 }
